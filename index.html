@@ -6,6 +6,25 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <div class="container">
+        <input type="text" id="input">
+        <span id="output"></span>
+    </div>
 </body>
+
+<script>
+    let obj = {}
+    Object.defineProperty(obj, 'val' , {
+        set(newValue) {
+            document.getElementById('input').value = newValue
+            console.log(newValue);
+            document.getElementById('output').innerHTML = newValue
+        }
+    })
+    let input = document.getElementById('input')
+    let output = document.getElementById('output')
+    input.addEventListener('keyup', function(e) {
+        obj.val = e.target.value
+    })
+</script>
 </html>
