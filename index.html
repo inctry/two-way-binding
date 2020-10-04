@@ -6,25 +6,63 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="container">
-        <input type="text" id="input">
-        <span id="output"></span>
+    <div id="app">
+        <input type="text" id="input" v-model="text">
+        {{ text }}
     </div>
 </body>
 
 <script>
-    let obj = {}
-    Object.defineProperty(obj, 'val' , {
-        set(newValue) {
-            document.getElementById('input').value = newValue
-            console.log(newValue);
-            document.getElementById('output').innerHTML = newValue
+
+function compile(node, vm) {
+    let reg = /\{\{(.*)\}\}/
+    if(node.nodeType === 1) {
+        let attr = node.attributes
+        for(let key in attr) {
+            if(attr[key].nodeName === 'v-model') {
+                let name = attr[key].value
+                // console.log(key + ' ' + name);
+                node.value = vm.data[name]
+                node.removeAttribute('v-model')
+            }
         }
-    })
-    let input = document.getElementById('input')
-    let output = document.getElementById('output')
-    input.addEventListener('keyup', function(e) {
-        obj.val = e.target.value
-    })
+    } 
+    if(node.nodeType === 3) {
+        if(reg.test(node.data)) {
+            let name = RegExp.$1
+            name = name.trim() // delete space
+            
+            node.data = vm.data[name]
+            // console.log(vm.data[name]);
+        }
+    }
+}
+
+function nodeToFragment(node, vm) {
+    let fragment = new DocumentFragment()
+    let child = null
+    while(child = node.firstChild) {
+        compile(child, vm)
+        fragment.append(child)
+            
+    }
+    return fragment
+}
+function Vue(options) {
+    this.data = options.data
+    let id = options.el
+    let dom = nodeToFragment(document.getElementById('app'), this)
+    document.getElementById('app').append(dom)
+}
+
+let vm = new Vue({
+    el: 'app',
+    data: {
+        text: 'Hello World'
+    }
+})
+
+
+
 </script>
 </html>
