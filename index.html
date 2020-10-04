@@ -22,7 +22,10 @@ function compile(node, vm) {
             if(attr[key].nodeName === 'v-model') {
                 let name = attr[key].value
                 // console.log(key + ' ' + name);
-                node.value = vm.data[name]
+                node.addEventListener('input', function(e) {
+                    vm[name] = e.target.value
+                }) 
+                node.value = vm[name]
                 node.removeAttribute('v-model')
             }
         }
@@ -32,10 +35,29 @@ function compile(node, vm) {
             let name = RegExp.$1
             name = name.trim() // delete space
             
-            node.data = vm.data[name]
+            node.data = vm[name] 
+            // simple way to achieve, needed to be fixed later
             // console.log(vm.data[name]);
         }
     }
+}
+function defineReactive(obj, key, val) {
+    Object.defineProperty(obj, key, {
+        get() {
+            return val
+        },
+        set(newValue) {
+            if(newValue === val) return
+            val = newValue
+            console.log(val);
+        }
+    })
+}
+
+function observe(obj, vm) {
+    Object.keys(obj).forEach((key) => {
+        defineReactive(vm, key, obj[key])
+    })
 }
 
 function nodeToFragment(node, vm) {
@@ -50,6 +72,9 @@ function nodeToFragment(node, vm) {
 }
 function Vue(options) {
     this.data = options.data
+
+    observe(this.data, this)
+
     let id = options.el
     let dom = nodeToFragment(document.getElementById('app'), this)
     document.getElementById('app').append(dom)
