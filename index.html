@@ -13,7 +13,36 @@
 </body>
 
 <script>
-
+function Watcher(vm, node, name) {
+    Dep.target = this
+    this.name = name
+    this.node = node
+    this.vm = vm
+    this.update()
+    Dep.target = null
+}
+Watcher.prototype = {
+    update() {
+        this.get()
+        this.node.data = this.value  // simply way, needed to be fixed
+    },
+    get() {
+        this.value = this.vm[this.name]
+    }
+}
+function Dep() {
+    this.subs = new Array()
+}
+Dep.prototype = {
+    addSub(sub) {
+        this.subs.push(sub)
+    },
+    notify() {
+        this.subs.forEach((value) => {
+            value.update()
+        })
+    }
+}
 function compile(node, vm) {
     let reg = /\{\{(.*)\}\}/
     if(node.nodeType === 1) {
@@ -34,21 +63,25 @@ function compile(node, vm) {
         if(reg.test(node.data)) {
             let name = RegExp.$1
             name = name.trim() // delete space
-            
             node.data = vm[name] 
+
+            new Watcher(vm, node, name)
             // simple way to achieve, needed to be fixed later
             // console.log(vm.data[name]);
         }
     }
 }
 function defineReactive(obj, key, val) {
+    let dep = new Dep()
     Object.defineProperty(obj, key, {
         get() {
+            if(Dep.target) dep.addSub(Dep.target)
             return val
         },
         set(newValue) {
             if(newValue === val) return
             val = newValue
+            dep.notify()
             console.log(val);
         }
     })
